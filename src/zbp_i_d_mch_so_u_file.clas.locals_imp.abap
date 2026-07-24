@@ -500,7 +500,7 @@ CLASS lhc_DataFile IMPLEMENTATION.
     ENDIF.
 
     " ── 2. Nếu > 10 record → KHÔNG xử lý đồng bộ, chuyển background ─
-    IF lines( lt_data ) > 10.
+    IF lines( lt_data ) > 0.
 
       MODIFY ENTITIES OF zi_d_mch_so_u_file IN LOCAL MODE
         ENTITY datafile
@@ -509,7 +509,7 @@ CLASS lhc_DataFile IMPLEMENTATION.
           %tky-uuid     = ls_data-uuid
           %tky-uuidfile = ls_data-uuidfile
           messagetype   = 'J'   " J = Job pending, save_modified sẽ đọc cờ này
-          message       = 'Large number of records - processing in the background'
+          message       = 'Processing in the background'
         ) )
         FAILED   DATA(lt_job_failed)
         REPORTED DATA(lt_job_reported).
@@ -524,6 +524,11 @@ CLASS lhc_DataFile IMPLEMENTATION.
         ) )
         FAILED   DATA(lt_hdr_failed)
         REPORTED DATA(lt_hdr_reported).
+
+      DATA(lv_uuidfile) = lt_data[ 1 ]-uuidfile.   " lấy từ record đã xử lý
+      result = VALUE #( FOR ls_key IN keys
+  ( %tky      = ls_key-%tky
+    %param-%tky = VALUE #( uuid = lv_uuidfile ) ) ).
 
       RETURN.  " Không xử lý API ngay, save_modified sẽ schedule job
     ENDIF.
@@ -609,6 +614,8 @@ CLASS lhc_DataFile IMPLEMENTATION.
       ) )
       FAILED   lt_hdr_failed
       REPORTED lt_hdr_reported.
+
+
   ENDMETHOD.
 
 
